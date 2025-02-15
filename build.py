@@ -521,7 +521,7 @@ def process_interface_method(node):
     raises = []
     for c in node.childNodes:
         name = getattr(c, "tagName", None)
-        if name in [None, "note"]:
+        if name in [None, "note", "rest"]:
             continue
         if name == "desc":
             for e in c.childNodes:
@@ -686,11 +686,11 @@ def preprocess(xidl, target):
 
 def get_vbox_version(config_kmk):
     "Return the vbox config major, minor, build"
-    with open(config_kmk, "rb") as f:
-        config = f.read()
-    major = b"6"  # re.search(b"VBOX_VERSION_MAJOR = (?P<major>[\d])", config).groupdict()['major']
+    # with open(config_kmk, "rb") as f:
+    #     config = f.read()
+    major = b"7"  # re.search(b"VBOX_VERSION_MAJOR = (?P<major>[\d])", config).groupdict()['major']
     minor = b"1"  # re.search(b"VBOX_VERSION_MINOR = (?P<minor>[\d])", config).groupdict()['minor']
-    build = b"16"  # re.search(b"VBOX_VERSION_BUILD = (?P<build>[\d])", config).groupdict()['build']
+    build = b"4"  # re.search(b"VBOX_VERSION_BUILD = (?P<build>[\d])", config).groupdict()['build']
     return b".".join([major, minor, build])
 
 
