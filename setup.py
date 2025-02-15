@@ -5,7 +5,7 @@ import os
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
 about = {}
-with open(os.path.join(base_dir, "virtualbox", "__about__.py")) as f:
+with open(os.path.join(base_dir, "virtualbox", "__about__.py"), encoding="utf8") as f:
     exec(f.read(), about)
 
 
@@ -19,7 +19,7 @@ setup(
     maintainer_email=about["__maintainer_email__"],
     url=about["__url__"],
     description="Complete implementation of VirtualBox's COM API with a Pythonic interface",
-    long_description=open("README.rst").read(),
+    long_description=open("README.rst", encoding="utf8").read(),
     license=about["__license__"],
     zip_safe=False,
     install_requires=[],
