@@ -13,23 +13,45 @@ class IGuest(library.IGuest):
     __doc__ = library.IGuest.__doc__
 
     def create_session(
-        self, user, password, domain="", session_name="pyvbox", timeout_ms=0
+        self, user, password, domain="", session_name="pyvbox", timeout_ms=-1
     ):
+        """
+        # 0 in timeout_ms means immediate return NOT 'infinite' timeout like SDK suggests
+        # -1 should accomplish 'infinite timeout' due to unsigned long two's complement conversion
+        """
         session = super(IGuest, self).create_session(
             user, password, domain, session_name
         )
-        for i in range(50):
-            if session.status == library.GuestSessionStatus.started:
-                break
-            time.sleep(0.1)
-        else:
-            if len(password) == 0:
-                raise SystemError(
-                    "GuestSession failed to start. Could be because "
-                    "of using an empty password."
-                )
-            raise SystemError("GuestSession failed to start")
-        if timeout_ms != 0:
+        
+        waitResult = session.wait_for_array([virtualbox.library.GuestSessionWaitForFlag.start], timeout_ms)
+
+        if waitResult != virtualbox.library.GuestSessionWaitResult.start:
+            # The session is still starting because either:
+            #     the waitFor timeout may have been too short
+            #     the session has failed to start
+            
+            # We now wait for the status see what is going on. 
+            error:library.VBoxError = None
+            try:
+                waitResult = session.wait_for_array([virtualbox.library.GuestSessionWaitForFlag.status], -1)
+            except library.VBoxError as e:
+                error = e
+                
+            if session.status != library.GuestSessionStatus.started or error is not None:
+                # Something really went wrong, so close the phantom session
+                session.close()
+                session.wait_for_array([library.GuestSessionWaitForFlag.terminate], -1)
+
+                if len(password) == 0:
+                    raise library.VBoxError(
+                        "GuestSession failed to start. Could be because of using an empty password."
+                        f"VBoxError: {error}")
+                else:
+                    raise library.VBoxError(f"GuestSession failed to start."
+                                            f"VBoxError: {error}")
+        """
+        # Unnecessary?
+        if timeout_ms != -1:
             # There is probably a better way to to this?
             if "win" in self.os_type_id.lower():
                 test_file = "C:\\Windows\\System32\\calc.exe"
@@ -45,6 +67,7 @@ class IGuest(library.IGuest):
                         raise
                     continue
                 break
+        """
         return session
 
     create_session.__doc__ = library.IGuest.create_session.__doc__
